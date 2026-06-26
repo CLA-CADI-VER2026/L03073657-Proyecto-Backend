@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Tienda Simple</title>
+    <style>
+        :root {
+            --primary-color: #2563eb;
+            --primary-hover: #1d4ed8;
+            --success-color: #16a34a;
+            --danger-color: #dc2626;
+            --warning-color: #d97706;
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --text-color: #1e293b;
+            --border-color: #e2e8f0;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        header {
+            background-color: var(--card-bg);
+            border-bottom: 1px solid var(--border-color);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        h1 {
+            font-size: 1.5rem;
+            color: var(--primary-color);
+        }
+
+        /* Sistema de Alertas */
+        #alert-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            max-width: 400px;
+        }
+
+        .alert {
+            padding: 1rem;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            color: white;
+            animation: slideIn 0.3s ease-out;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .alert.success { background-color: var(--success-color); }
+        .alert.error { background-color: var(--danger-color); }
+        .alert .close-btn {
+            background: none;
+            border: none;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            margin-left: 1rem;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        /* Navegación por Pestañas */
+        .tabs {
+            display: flex;
+            background-color: var(--card-bg);
+            border-bottom: 1px solid var(--border-color);
+            padding: 0 2rem;
+        }
+
+        .tab-btn {
+            padding: 1rem 1.5rem;
+            border: none;
+            background: none;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 500;
+            color: #64748b;
+            border-bottom: 3px solid transparent;
+            transition: all 0.2s;
+        }
+
+        .tab-btn:hover {
+            color: var(--primary-color);
+        }
+
+        .tab-btn.active {
+            color: var(--primary-color);
+            border-bottom-color: var(--primary-color);
+        }
+
+        /* Contenido principal */
+        main {
+            padding: 2rem;
+            flex: 1;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        /* Botones */
+        .btn {
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            border: none;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary { background-color: var(--primary-color); color: white; }
+        .btn-primary:hover { background-color: var(--primary-hover); }
+        .btn-secondary { background-color: #64748b; color: white; }
+        .btn-secondary:hover { background-color: #475569; }
+        .btn-danger { background-color: var(--danger-color); color: white; }
+        .btn-danger:hover { background-color: #b91c1c; }
+        .btn-sm { padding: 0.25rem 0.5rem; font-size: 0.875rem; }
+
+        /* Tablas */
+        .table-container {
+            background-color: var(--card-bg);
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            overflow-x: auto;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+
+        th, td {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        th {
+            background-color: #f8fafc;
+            font-weight: 600;
+            color: #475569;
+        }
+
+        tr:hover {
+            background-color: #f1f5f9;
+        }
+
+        /* Modales / Formularios */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+            z-index: 2000;
+        }
+
+        .modal.open {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .modal-content {
+            background-color: var(--card-bg);
+            padding: 2rem;
+            border-radius: 8px;
+            width: 100%;
+            max-width: 500px;
+            box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1);
+            transform: translateY(-20px);
+            transition: transform 0.3s ease;
+        }
+
+        .modal.open .modal-content {
+            transform: translateY(0);
+        }
+
+        .modal-header {
+            margin-bottom: 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .form-group {
+            margin-bottom: 1.25rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            font-size: 0.875rem;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 0.625rem;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 1rem;
+            outline: none;
+        }
+
+        .form-control:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        .modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 0.75rem;
+            margin-top: 1.5rem;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Panel de Administración - Tienda Simple</h1>
+        <span style="font-size: 0.875rem; color: #64748b;">API Base: http://localhost:3000/api/v1</span>
+    </header>
+
+    <nav class="tabs">
+        <button class="tab-btn active" onclick="switchTab('clientes')">Clientes</button>
+        <button class="tab-btn" onclick="switchTab('productos')">Productos</button>
+        <button class="tab-btn" onclick="switchTab('pedidos')">Pedidos</button>
+    </nav>
+
+    <div id="alert-container"></div>
+
+    <main>
+        <section id="content-clientes" class="tab-content active">
+            <div class="section-header">
+                <h2>Gestión de Clientes</h2>
+                <button class="btn btn-primary" onclick="openModal('cliente')">➕ Nuevo Cliente</button>
+            </div>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Nombre</th>
+                            <th>Email</th>
+                            <th>Teléfono</th>
+                            <th>Fecha Registro</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="table-clientes-body"></tbody>
+                </table>
+            </div>
+        </section>
+
+        <section id="content-productos" class="tab-content">
+            <div class="section-header">
+                <h2>Gestión de Productos</h2>
+                <button class="btn btn-primary" onclick="openModal('producto')">➕ Nuevo Producto</button>
+            </div>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Nombre</th>
+                            <th>Descripción</th>
+                            <th>Precio</th>
+                            <th>Stock</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="table-productos-body"></tbody>
+                </table>
+            </div>
+        </section>
+
+        <section id="content-pedidos" class="tab-content">
+            <div class="section-header">
+                <h2>Gestión de Pedidos</h2>
+                <button class="btn btn-primary" onclick="openModal('pedido')">➕ Nuevo Pedido</button>
+            </div>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID Pedido</th>
+                            <th>Cliente</th>
+                            <th>Producto</th>
+                            <th>Cantidad</th>
+                            <th>Total</th>
+                            <th>Fecha</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="table-pedidos-body"></tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <div id="crud-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modal-title">Formulario</h3>
+                <button class="btn btn-secondary btn-sm" onclick="closeModal()">✕</button>
+            </div>
+            <form id="modal-form" onsubmit="handleFormSubmit(event)">
+                <div id="form-fields"></div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'https://sturdy-computing-machine-r46q74wjw67ghxw6-3000.app.github.dev/api/v1';
+        
+        // Estado local de la app para mapear Relaciones (IDs -> Nombres)
+        let cacheClientes = [];
+        let cacheProductos = [];
+        
+        // Control de edición actual
+        let currentResourceType = '';
+        let currentResourceId = null;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadAllData();
+        });
+
+        // Alertas globales en UI
+        function showAlert(message, type = 'success') {
+            const container = document.getElementById('alert-container');
+            const alert = document.createElement('div');
+            alert.className = `alert ${type}`;
+            alert.innerHTML = `
+                <span>${message}</span>
+                <button class="close-btn" onclick="this.parentElement.remove()">✕</button>
+            `;
+            container.appendChild(alert);
+            setTimeout(() => alert.remove(), 5000);
+        }
+
+        // Navegación entre pestañas
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            
+            event.target.classList.add('active');
+            document.getElementById(`content-${tabName}`).classList.add('active');
+            loadAllData(); // Sincroniza datos al cambiar de vista
+        }
+
+        // Cargador centralizado de datos (Fetches globales)
+        async function loadAllData() {
+            await Promise.all([
+                fetchResource('clientes', renderClientesTable),
+                fetchResource('productos', renderProductosTable),
+                fetchResource('pedidos', renderPedidosTable)
+            ]);
+        }
+
+        async function fetchResource(endpoint, renderCallback) {
+            try {
+                const response = await fetch(`${API_BASE_URL}/${endpoint}`);
+                if (!response.ok) {
+                    const errData = await response.json();
+                    throw new Error(errData.message || `Error del servidor (${response.status})`);
+                }
+                const data = await response.json();
+                
+                // Actualizar cachés globales para los selectores cruzados
+                if (endpoint === 'clientes') cacheClientes = data;
+                if (endpoint === 'productos') cacheProductos = data;
+                
+                renderCallback(data);
+            } catch (error) {
+                showAlert(`No se pudo cargar ${endpoint}: ${error.message}`, 'error');
+            }
+        }
+
+        // RENDERS DE TABLAS
+        function renderClientesTable(clientes) {
+            const tbody = document.getElementById('table-clientes-body');
+            tbody.innerHTML = clientes.map(c => `
+                <tr>
+                    <td>${c.id_cliente}</td>
+                    <td><b>${c.nombre}</b></td>
+                    <td>${c.email}</td>
+                    <td>${c.telefono || '<i>No asignado</i>'}</td>
+                    <td>${new Date(c.created_at).toLocaleString()}</td>
+                    <td>
+                        <button class="btn btn-secondary btn-sm" onclick="openModal('cliente', ${JSON.stringify(c).replace(/"/g, '&quot;')})">✏️</button>
+                        <button class="btn btn-danger btn-sm" onclick="deleteResource('clientes', ${c.id_cliente})">🗑️</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function renderProductosTable(productos) {
+            const tbody = document.getElementById('table-productos-body');
+            tbody.innerHTML = productos.map(p => `
+                <tr>
+                    <td>${p.id_producto}</td>
+                    <td><b>${p.nombre}</b></td>
+                    <td>${p.descripcion || ''}</td>
+                    <td>$${p.precio.toFixed(2)}</td>
+                    <td>${p.stock}</td>
+                    <td>
+                        <button class="btn btn-secondary btn-sm" onclick="openModal('producto', ${JSON.stringify(p).replace(/"/g, '&quot;')})">✏️</button>
+                        <button class="btn btn-danger btn-sm" onclick="deleteResource('productos', ${p.id_producto})">🗑️</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function renderPedidosTable(pedidos) {
+            const tbody = document.getElementById('table-pedidos-body');
+            tbody.innerHTML = pedidos.map(ped => {
+                const cliente = cacheClientes.find(c => c.id_cliente === ped.id_cliente);
+                const producto = cacheProductos.find(p => p.id_producto === ped.id_producto);
+                return `
+                    <tr>
+                        <td>${ped.id_pedido}</td>
+                        <td>${cliente ? cliente.nombre : `Cliente ID: ${ped.id_cliente}`}</td>
+                        <td>${producto ? producto.nombre : `Producto ID: ${ped.id_producto}`}</td>
+                        <td>${ped.cantidad}</td>
+                        <td><b>$${ped.total.toFixed(2)}</b></td>
+                        <td>${new Date(ped.fecha).toLocaleString()}</td>
+                        <td>
+                            <button class="btn btn-secondary btn-sm" onclick="openModal('pedido', ${JSON.stringify(ped).replace(/"/g, '&quot;')})">✏️</button>
+                            <button class="btn btn-danger btn-sm" onclick="deleteResource('pedidos', ${ped.id_pedido})">🗑️</button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // LÓGICA DE CONTROL MODAL DINÁMICO
+        function openModal(resourceType, data = null) {
+            currentResourceType = resourceType;
+            currentResourceId = data ? (data.id_cliente || data.id_producto || data.id_pedido) : null;
+            
+            const modal = document.getElementById('crud-modal');
+            const modalTitle = document.getElementById('modal-title');
+            const fieldsContainer = document.getElementById('form-fields');
+            
+            modalTitle.innerText = `${currentResourceId ? 'Editar' : 'Crear'} ${resourceType.toUpperCase()}`;
+            fieldsContainer.innerHTML = ''; // Limpiar campos antiguos
+
+            // Inyección dinámica de controles de formulario según el recurso mapeado del YAML
+            if (resourceType === 'cliente') {
+                fieldsContainer.innerHTML = `
+                    <div class="form-group">
+                        <label>Nombre Completo *</label>
+                        <input type="text" id="field-nombre" class="form-control" required value="${data ? data.nombre : ''}">
+                    </div>
+                    <div class="form-group">
+                        <label>Correo Electrónico *</label>
+                        <input type="email" id="field-email" class="form-control" required value="${data ? data.email : ''}">
+                    </div>
+                    <div class="form-group">
+                        <label>Teléfono</label>
+                        <input type="text" id="field-telefono" class="form-control" value="${data ? data.telefono || '' : ''}">
+                    </div>
+                `;
+            } else if (resourceType === 'producto') {
+                fieldsContainer.innerHTML = `
+                    <div class="form-group">
+                        <label>Nombre del Producto *</label>
+                        <input type="text" id="field-nombre" class="form-control" required value="${data ? data.nombre : ''}">
+                    </div>
+                    <div class="form-group">
+                        <label>Descripción</label>
+                        <textarea id="field-descripcion" class="form-control" rows="3">${data ? data.descripcion || '' : ''}</textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Precio ($) *</label>
+                        <input type="number" step="0.01" id="field-precio" class="form-control" required value="${data ? data.precio : ''}">
+                    </div>
+                    <div class="form-group">
+                        <label>Stock Inicial</label>
+                        <input type="number" id="field-stock" class="form-control" value="${data ? data.stock : '0'}">
+                    </div>
+                `;
+            } else if (resourceType === 'pedido') {
+                // Generar selectores dinámicos basados en relaciones relacionales relativas
+                const clienteOptions = cacheClientes.map(c => `<option value="${c.id_cliente}" ${data && data.id_cliente === c.id_cliente ? 'selected' : ''}>${c.nombre}</option>`).join('');
+                const productoOptions = cacheProductos.map(p => `<option value="${p.id_producto}" ${data && data.id_producto === p.id_producto ? 'selected' : ''}>${p.nombre} ($${p.precio})</option>`).join('');
+
+                fieldsContainer.innerHTML = `
+                    <div class="form-group">
+                        <label>Cliente Relacionado *</label>
+                        <select id="field-id_cliente" class="form-control" required>${clienteOptions}</select>
+                    </div>
+                    <div class="form-group">
+                        <label>Producto solicitado *</label>
+                        <select id="field-id_producto" class="form-control" required onchange="calculateOrderTotal()">${productoOptions}</select>
+                    </div>
+                    <div class="form-group">
+                        <label>Cantidad *</label>
+                        <input type="number" id="field-cantidad" class="form-control" min="1" required value="${data ? data.cantidad : '1'}" oninput="calculateOrderTotal()">
+                    </div>
+                    <div class="form-group">
+                        <label>Total Facturado ($) *</label>
+                        <input type="number" step="0.01" id="field-total" class="form-control" required value="${data ? data.total : ''}">
+                    </div>
+                `;
+                if(!data) setTimeout(calculateOrderTotal, 50); // Auto calcular si es nuevo
+            }
+
+            modal.classList.add('open');
+        }
+
+        function closeModal() {
+            document.getElementById('crud-modal').classList.remove('open');
+            document.getElementById('modal-form').reset();
+        }
+
+        // Calculador dinámico del total del pedido en tiempo de entrada
+        function calculateOrderTotal() {
+            const productSelect = document.getElementById('field-id_producto');
+            const cantidadInput = document.getElementById('field-cantidad');
+            const totalInput = document.getElementById('field-total');
+            
+            if (productSelect && cantidadInput && totalInput && productSelect.value) {
+                const selectedProd = cacheProductos.find(p => p.id_producto == productSelect.value);
+                if (selectedProd) {
+                    const cantidad = parseInt(cantidadInput.value) || 0;
+                    totalInput.value = (selectedProd.precio * cantidad).toFixed(2);
+                }
+            }
+        }
+
+        // ACCIONES INTERNAS: CREACIÓN / ACTUALIZACIÓN (POST / PUT)
+        async function handleFormSubmit(event) {
+            event.preventDefault();
+            
+            // Mapeo automático de endpoint plural
+            let endpoint = currentResourceType === 'cliente' ? 'clientes' : (currentResourceType === 'producto' ? 'productos' : 'pedidos');
+            let url = currentResourceId ? `${API_BASE_URL}/${endpoint}/${currentResourceId}` : `${API_BASE_URL}/${endpoint}`;
+            let method = currentResourceId ? 'PUT' : 'POST';
+
+            // Recolección dinámica de datos en el payload JSON
+            let bodyData = {};
+            if (currentResourceType === 'cliente') {
+                bodyData = {
+                    nombre: document.getElementById('field-nombre').value,
+                    email: document.getElementById('field-email').value,
+                    telefono: document.getElementById('field-telefono').value || null
+                };
+            } else if (currentResourceType === 'producto') {
+                bodyData = {
+                    nombre: document.getElementById('field-nombre').value,
+                    descripcion: document.getElementById('field-descripcion').value || null,
+                    precio: parseFloat(document.getElementById('field-precio').value),
+                    stock: parseInt(document.getElementById('field-stock').value) || 0
+                };
+            } else if (currentResourceType === 'pedido') {
+                bodyData = {
+                    id_cliente: parseInt(document.getElementById('field-id_cliente').value),
+                    id_producto: parseInt(document.getElementById('field-id_producto').value),
+                    cantidad: parseInt(document.getElementById('field-cantidad').value),
+                    total: parseFloat(document.getElementById('field-total').value)
+                };
+            }
+
+            try {
+                const response = await fetch(url, {
+                    method: method,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(bodyData)
+                });
+
+                if (!response.ok) {
+                    const errData = await response.json();
+                    throw new Error(errData.message || 'Error al procesar la solicitud.');
+                }
+
+                showAlert(`Registro ${currentResourceId ? 'actualizado' : 'creado'} con éxito.`);
+                closeModal();
+                loadAllData();
+            } catch (error) {
+                showAlert(error.message, 'error');
+            }
+        }
+
+        // ACCIÓN INTERNA: ELIMINACIÓN (DELETE)
+        async function deleteResource(endpoint, id) {
+            if (!confirm(`¿Estás seguro de que deseas eliminar este registro de ${endpoint}?`)) return;
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/${endpoint}/${id}`, {
+                    method: 'DELETE'
+                });
+
+                if (!response.ok) {
+                    const errData = await response.json();
+                    throw new Error(errData.message || 'No se pudo eliminar el recurso.');
+                }
+
+                showAlert('Registro eliminado correctamente.');
+                loadAllData();
+            } catch (error) {
+                showAlert(error.message, 'error');
+            }
+        }
+    </script>
+</body>
+</html>

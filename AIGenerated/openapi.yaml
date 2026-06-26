@@ -1,0 +1,509 @@
+openapi: 3.0.3
+info:
+  title: API Tienda Simple
+  description: API REST con operaciones CRUD completas para gestionar clientes, productos y pedidos.
+  version: 1.0.0
+servers:
+  - url: http://localhost:3000/api/v1
+    description: Servidor de desarrollo local
+
+tags:
+  - name: Clientes
+    description: Operaciones sobre la tabla de clientes
+  - name: Productos
+    description: Operaciones sobre la tabla de productos
+  - name: Pedidos
+    description: Operaciones sobre la tabla de pedidos
+
+paths:
+  # ---------------------------------------------------------------------------
+  # ENDPOINTS: CLIENTES
+  # ---------------------------------------------------------------------------
+  /clientes:
+    get:
+      tags:
+        - Clientes
+      summary: Obtener todos los clientes
+      responses:
+        '200':
+          description: Lista de clientes obtenida con éxito
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Cliente'
+        '500':
+          $ref: '#/components/responses/Error500'
+    post:
+      tags:
+        - Clientes
+      summary: Crear un nuevo cliente
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ClienteInput'
+            example:
+              nombre: "Ana García"
+              email: "ana.garcia@email.com"
+              telefono: "555-1001"
+      responses:
+        '201':
+          description: Cliente creado con éxito
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Cliente'
+        '400':
+          $ref: '#/components/responses/Error400'
+        '500':
+          $ref: '#/components/responses/Error500'
+
+  /clientes/{id_cliente}:
+    parameters:
+      - name: id_cliente
+        in: path
+        required: true
+        description: ID del cliente a consultar, actualizar o eliminar
+        schema:
+          type: integer
+    get:
+      tags:
+        - Clientes
+      summary: Obtener un cliente por su ID
+      responses:
+        '200':
+          description: Cliente encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Cliente'
+        '404':
+          $ref: '#/components/responses/Error404'
+        '500':
+          $ref: '#/components/responses/Error500'
+    put:
+      tags:
+        - Clientes
+      summary: Actualizar un cliente existente
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ClienteInput'
+            example:
+              nombre: "Ana García Editado"
+              email: "ana.garcia.nueva@email.com"
+              telefono: "555-9999"
+      responses:
+        '200':
+          description: Cliente actualizado con éxito
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Cliente'
+        '400':
+          $ref: '#/components/responses/Error400'
+        '404':
+          $ref: '#/components/responses/Error404'
+        '500':
+          $ref: '#/components/responses/Error500'
+    delete:
+      tags:
+        - Clientes
+      summary: Eliminar un cliente por su ID
+      responses:
+        '204':
+          description: Cliente eliminado con éxito (Sin contenido)
+        '404':
+          $ref: '#/components/responses/Error404'
+        '500':
+          $ref: '#/components/responses/Error500'
+
+  # ---------------------------------------------------------------------------
+  # ENDPOINTS: PRODUCTOS
+  # ---------------------------------------------------------------------------
+  /productos:
+    get:
+      tags:
+        - Productos
+      summary: Obtener todos los productos
+      responses:
+        '200':
+          description: Lista de productos obtenida con éxito
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Producto'
+        '500':
+          $ref: '#/components/responses/Error500'
+    post:
+      tags:
+        - Productos
+      summary: Crear un nuevo producto
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductoInput'
+            example:
+              nombre: "Laptop Pro 15"
+              descripcion: "Laptop de alto rendimiento, 16 GB RAM"
+              precio: 1299.99
+              stock: 10
+      responses:
+        '201':
+          description: Producto creado con éxito
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Producto'
+        '400':
+          $ref: '#/components/responses/Error400'
+        '500':
+          $ref: '#/components/responses/Error500'
+
+  /productos/{id_producto}:
+    parameters:
+      - name: id_producto
+        in: path
+        required: true
+        description: ID del producto a consultar, actualizar o eliminar
+        schema:
+          type: integer
+    get:
+      tags:
+        - Productos
+      summary: Obtener un producto por su ID
+      responses:
+        '200':
+          description: Producto encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Producto'
+        '404':
+          $ref: '#/components/responses/Error404'
+        '500':
+          $ref: '#/components/responses/Error500'
+    put:
+      tags:
+        - Productos
+      summary: Actualizar un producto existente
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductoInput'
+            example:
+              nombre: "Laptop Pro 15 Modificada"
+              descripcion: "Laptop de alto rendimiento, 32 GB RAM"
+              precio: 1499.99
+              stock: 8
+      responses:
+        '200':
+          description: Producto actualizado con éxito
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Producto'
+        '400':
+          $ref: '#/components/responses/Error400'
+        '404':
+          $ref: '#/components/responses/Error404'
+        '500':
+          $ref: '#/components/responses/Error500'
+    delete:
+      tags:
+        - Productos
+      summary: Eliminar un producto por su ID
+      responses:
+        '204':
+          description: Producto eliminado con éxito (Sin contenido)
+        '404':
+          $ref: '#/components/responses/Error404'
+        '500':
+          $ref: '#/components/responses/Error500'
+
+  # ---------------------------------------------------------------------------
+  # ENDPOINTS: PEDIDOS
+  # ---------------------------------------------------------------------------
+  /pedidos:
+    get:
+      tags:
+        - Pedidos
+      summary: Obtener todos los pedidos
+      responses:
+        '200':
+          description: Lista de pedidos obtenida con éxito
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Pedido'
+        '500':
+          $ref: '#/components/responses/Error500'
+    post:
+      tags:
+        - Pedidos
+      summary: Crear un nuevo pedido
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PedidoInput'
+            example:
+              id_cliente: 1
+              id_producto: 1
+              cantidad: 1
+              total: 1299.99
+      responses:
+        '201':
+          description: Pedido creado con éxito
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Pedido'
+        '400':
+          $ref: '#/components/responses/Error400'
+        '500':
+          $ref: '#/components/responses/Error500'
+
+  /pedidos/{id_pedido}:
+    parameters:
+      - name: id_pedido
+        in: path
+        required: true
+        description: ID del pedido a consultar, actualizar o eliminar
+        schema:
+          type: integer
+    get:
+      tags:
+        - Pedidos
+      summary: Obtener un pedido por su ID
+      responses:
+        '200':
+          description: Pedido encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Pedido'
+        '404':
+          $ref: '#/components/responses/Error404'
+        '500':
+          $ref: '#/components/responses/Error500'
+    put:
+      tags:
+        - Pedidos
+      summary: Actualizar un pedido existente
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PedidoInput'
+            example:
+              id_cliente: 1
+              id_producto: 2
+              cantidad: 2
+              total: 59.98
+      responses:
+        '200':
+          description: Pedido actualizado con éxito
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Pedido'
+        '400':
+          $ref: '#/components/responses/Error400'
+        '404':
+          $ref: '#/components/responses/Error404'
+        '500':
+          $ref: '#/components/responses/Error500'
+    delete:
+      tags:
+        - Pedidos
+      summary: Eliminar un pedido por su ID
+      responses:
+        '204':
+          description: Pedido eliminado con éxito (Sin contenido)
+        '404':
+          $ref: '#/components/responses/Error404'
+        '500':
+          $ref: '#/components/responses/Error500'
+
+# -----------------------------------------------------------------------------
+# COMPONENTES REUTILIZABLES (SCHEMAS Y RESPUESTAS)
+# -----------------------------------------------------------------------------
+components:
+  schemas:
+    # --- Esquema de Error General ---
+    Error:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: string
+          description: Código interno del error
+        message:
+          type: string
+          description: Mensaje legible que describe el error
+
+    # --- Esquemas: Clientes ---
+    ClienteInput:
+      type: object
+      required:
+        - nombre
+        - email
+      properties:
+        nombre:
+          type: string
+          maxLength: 100
+        email:
+          type: string
+          format: email
+          maxLength: 150
+        telefono:
+          type: string
+          maxLength: 20
+          nullable: true
+
+    Cliente:
+      allOf:
+        - type: object
+          required:
+            - id_cliente
+            - created_at
+          properties:
+            id_cliente:
+              type: integer
+            created_at:
+              type: string
+              format: date-time
+        - $ref: '#/components/schemas/ClienteInput'
+      example:
+        id_cliente: 1
+        nombre: "Ana García"
+        email: "ana.garcia@email.com"
+        telefono: "555-1001"
+        created_at: "2026-06-24T18:00:00Z"
+
+    # --- Esquemas: Productos ---
+    ProductoInput:
+      type: object
+      required:
+        - nombre
+        - precio
+      properties:
+        nombre:
+          type: string
+          maxLength: 150
+        descripcion:
+          type: string
+          nullable: true
+        precio:
+          type: number
+          format: float
+        stock:
+          type: integer
+          default: 0
+
+    Producto:
+      allOf:
+        - type: object
+          required:
+            - id_producto
+          properties:
+            id_producto:
+              type: integer
+        - $ref: '#/components/schemas/ProductoInput'
+      example:
+        id_producto: 1
+        nombre: "Laptop Pro 15"
+        descripcion: "Laptop de alto rendimiento, 16 GB RAM"
+        precio: 1299.99
+        stock: 10
+
+    # --- Esquemas: Pedidos ---
+    PedidoInput:
+      type: object
+      required:
+        - id_cliente
+        - id_producto
+        - total
+      properties:
+        id_cliente:
+          type: integer
+          description: ID del cliente que realiza el pedido (FK)
+        id_producto:
+          type: integer
+          description: ID del producto solicitado (FK)
+        cantidad:
+          type: integer
+          default: 1
+        total:
+          type: number
+          format: float
+          description: Total del pedido (Precio * Cantidad)
+
+    Pedido:
+      allOf:
+        - type: object
+          required:
+            - id_pedido
+            - fecha
+          properties:
+            id_pedido:
+              type: integer
+            fecha:
+              type: string
+              format: date-time
+        - $ref: '#/components/schemas/PedidoInput'
+      example:
+        id_pedido: 1
+        id_cliente: 1
+        id_producto: 1
+        cantidad: 1
+        total: 1299.99
+        fecha: "2026-06-24T18:15:00Z"
+
+  # --- Respuestas de Error Reutilizables ---
+  responses:
+    Error400:
+      description: Solicitud incorrecta o datos de entrada inválidos
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            code: "BAD_REQUEST"
+            message: "El campo 'email' no tiene un formato válido o faltan campos obligatorios."
+    Error404:
+      description: El recurso solicitado no fue encontrado
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            code: "NOT_FOUND"
+            message: "El recurso solicitado con el ID proporcionado no existe."
+    Error500:
+      description: Error interno del servidor
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            code: "INTERNAL_SERVER_ERROR"
+            message: "Ocurrió un error inesperado al procesar la solicitud en la base de datos."
