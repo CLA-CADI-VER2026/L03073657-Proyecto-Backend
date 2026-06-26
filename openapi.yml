@@ -1,0 +1,393 @@
+openapi: 3.0.3
+info:
+  title: API Directorio Académico
+  description: API REST con operaciones CRUD para la gestión de materias y docentes.
+  version: 1.0.0
+servers:
+  - url: http://localhost:3000/api/v1
+    description: Servidor de desarrollo local
+
+tags:
+  - name: Materias
+    description: Operaciones relacionadas con la gestión de materias.
+  - name: Docentes
+    description: Operaciones relacionadas con la gestión de docentes.
+
+paths:
+  /materias:
+    get:
+      tags:
+        - Materias
+      summary: Listar todas las materias
+      responses:
+        '200':
+          description: Listado de materias obtenido con éxito.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Materia'
+              example:
+                - id: 1
+                  clave: "TC1028"
+                  nombre: "Programación en Python"
+                  creditos: 5
+                - id: 2
+                  clave: "TC1004B"
+                  nombre: "Implementación de IoT"
+                  creditos: 4
+        '500':
+          description: Error interno del servidor.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    post:
+      tags:
+        - Materias
+      summary: Crear una nueva materia
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MateriaInput'
+            example:
+              clave: "TC2005B"
+              nombre: "Construcción de Software"
+              creditos: 5
+      responses:
+        '201':
+          description: Materia creada con éxito.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Materia'
+              example:
+                id: 3
+                clave: "TC2005B"
+                nombre: "Construcción de Software"
+                creditos: 5
+        '400':
+          description: Solicitud incorrecta o datos inválidos (ej. clave duplicada).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error interno del servidor.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /materias/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        description: ID único de la materia
+        schema:
+          type: integer
+    get:
+      tags:
+        - Materias
+      summary: Obtener una materia por ID
+      responses:
+        '200':
+          description: Materia encontrada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Materia'
+              example:
+                id: 1
+                clave: "TC1028"
+                nombre: "Programación en Python"
+                creditos: 5
+        '404':
+          description: Materia no encontrada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error interno del servidor.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    put:
+      tags:
+        - Materias
+      summary: Actualizar una materia por ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MateriaInput'
+            example:
+              clave: "TC1028"
+              nombre: "Programación Avanzada en Python"
+              creditos: 6
+      responses:
+        '200':
+          description: Materia actualizada con éxito.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Materia'
+              example:
+                id: 1
+                clave: "TC1028"
+                nombre: "Programación Avanzada en Python"
+                creditos: 6
+        '400':
+          description: Solicitud incorrecta o datos inválidos.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Materia no encontrada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error interno del servidor.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    delete:
+      tags:
+        - Materias
+      summary: Eliminar una materia por ID
+      responses:
+        '204':
+          description: Materia eliminada con éxito (sin contenido).
+        '400':
+          description: No se puede eliminar la materia debido a restricciones de clave foránea.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Materia no encontrada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error interno del servidor.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /docentes:
+    get:
+      tags:
+        - Docentes
+      summary: Listar todos los docentes
+      responses:
+        '200':
+          description: Listado de docentes obtenido con éxito.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Docente'
+              example:
+                - id: 1
+                  nombre: "Dr. Alan Turing"
+                  email: "alan.turing@universidad.edu"
+                  materia_id: 1
+                - id: 2
+                  nombre: "Dra. Margaret Hamilton"
+                  email: "margaret.h@universidad.edu"
+                  materia_id: 3
+        '500':
+          description: Error interno del servidor.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    post:
+      tags:
+        - Docentes
+      summary: Crear un nuevo docente
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DocenteInput'
+            example:
+              nombre: "Dr. Alan Turing"
+              email: "alan.turing@universidad.edu"
+              materia_id: 1
+      responses:
+        '201':
+          description: Docente creado con éxito.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Docente'
+              example:
+                id: 1
+                nombre: "Dr. Alan Turing"
+                email: "alan.turing@universidad.edu"
+                materia_id: 1
+        '400':
+          description: Solicitud incorrecta (ej. email duplicado o materia_id inexistente).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error interno del servidor.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /docentes/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        description: ID único del docente
+        schema:
+          type: integer
+    delete:
+      tags:
+        - Docentes
+      summary: Eliminar un docente por ID
+      responses:
+        '204':
+          description: Docente eliminado con éxito (sin contenido).
+        '404':
+          description: Docente no encontrado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error interno del servidor.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+components:
+  schemas:
+    Materia:
+      type: object
+      required:
+        - id
+        - clave
+        - nombre
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: ID autogenerado de la materia.
+        clave:
+          type: string
+          maxLength: 20
+          description: Clave única identificadora de la materia.
+        nombre:
+          type: string
+          maxLength: 100
+          description: Nombre completo de la materia.
+        creditos:
+          type: integer
+          description: Cantidad de créditos académicos asignados.
+
+    MateriaInput:
+      type: object
+      required:
+        - clave
+        - nombre
+      properties:
+        clave:
+          type: string
+          maxLength: 20
+          description: Clave única identificadora de la materia.
+        nombre:
+          type: string
+          maxLength: 100
+          description: Nombre completo de la materia.
+        creditos:
+          type: integer
+          description: Cantidad de créditos académicos asignados.
+
+    Docente:
+      type: object
+      required:
+        - id
+        - nombre
+        - email
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: ID autogenerado del docente.
+        nombre:
+          type: string
+          maxLength: 100
+          description: Nombre completo del docente.
+        email:
+          type: string
+          format: email
+          maxLength: 100
+          description: Correo electrónico único del docente.
+        materia_id:
+          type: integer
+          nullable: true
+          description: ID de la materia que imparte (Relación con tabla materias).
+
+    DocenteInput:
+      type: object
+      required:
+        - nombre
+        - email
+      properties:
+        nombre:
+          type: string
+          maxLength: 100
+          description: Nombre completo del docente.
+        email:
+          type: string
+          format: email
+          maxLength: 100
+          description: Correo electrónico único del docente.
+        materia_id:
+          type: integer
+          nullable: true
+          description: ID de la materia que imparte (Relación con tabla materias).
+
+    Error:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: string
+          description: Código identificador de error legible (ej. NOT_FOUND, DUP_ENTRY).
+        message:
+          type: string
+          description: Descripción detallada y amigable del error ocurrido.
+      example:
+        code: "RESOURCE_NOT_FOUND"
+        message: "El recurso solicitado con el ID especificado no existe en la base de datos."
