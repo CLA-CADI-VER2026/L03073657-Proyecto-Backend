@@ -1,303 +1,131 @@
-# 1. Base de datos ejemplo
+             DIRECTORIO ACADÉMICO - API REST Y FRONTEND
+Este proyecto consiste en un sistema de gestion academica compuesto por 
+una API REST construida con Flask y MySQL, y un cliente web interactivo 
+desarrollado en HTML y JavaScript puro. Permite realizar operaciones 
+CRUD (Crear, Leer, Actualizar y Eliminar) sobre los recursos de Materias 
+y Docentes, respetando las restricciones de integridad referencial.
 
-## Configuración de MySQL
+------------------------------------------------------------------------
+1. CONFIGURACIÓN DE LA BASE DE DATOS
+------------------------------------------------------------------------
 
-### Iniciar la instancia de MySQL en Docker
+Antes de inicializar la aplicacion, asegurese de ejecutar el siguiente 
+script en su servidor MySQL para estructurar la base de datos e insertar 
+los registros iniciales:
 
-Para iniciar una instancia de **MySQL** en un contenedor Docker, ejecuta el siguiente comando en la terminal de tu **GitHub Codespace**:
+CREATE DATABASE IF NOT EXISTS directorio;
+USE directorio;
 
-```sh
-docker run --name mysql-container -e MYSQL_ROOT_PASSWORD=contrasena -e MYSQL_DATABASE=tienda_simple -p 3306:3306 -d mysql:latest
-```
-
-### Conectarse al contenedor a través de la herramienta de linea de comandos para generar las tablas
-
-```sh
-docker exec -i mysql-container mysql -u root -pcontrasena tienda_simple < tienda_simple.sql
-```
-
-Esto deberá crear las tablas necesarias e insertar algunos datos de ejemplo
-
-
-### Verificar que las tablas estén creadas y tenga información. Conectarse al contenedor a través de la herramienta de linea de comandos.
-```sh
-docker exec -it mysql-container mysql -u root -pcontrasena
-```
-
-#### Dentro de mysql ejecuta
-```sh
-USE tienda_simple;
-```
-
-```sh
-SELECT * from clientes;
-```
-
-```sh
-SELECT * from productos;
-```
-
-```sh
-SELECT * from pedidos;
-```
-
-Para salir escriba *quit* y presione enter
-
-### Instala conector python-MySQL
-```sh
-pip install mysql-connector-python
-```
-
-***
-
-# 2. Hands-on: Generar especificación OpenAPI a partir del archivo SQL usando IA
-
-## ¿Qué es OpenAPI 3.0?
-
-**OpenAPI 3.0** es un estándar abierto para describir APIs REST mediante un archivo de texto en formato YAML o JSON. Funciona como un contrato entre el backend y cualquier cliente que lo consuma: define qué endpoints existen, qué parámetros aceptan, qué respuestas regresan y qué esquemas de datos manejan.
-
-Un archivo OpenAPI típico tiene esta estructura:
-
-```yaml
-openapi: 3.0.0
-info:
-  title: Mi API
-  version: 1.0.0
-servers:
-  - url: http://localhost:3000/api/v1
-paths:
-  /clientes:
-    get:
-      summary: Lista todos los clientes
-      responses:
-        '200':
-          description: OK
-components:
-  schemas:
-    Cliente:
-      type: object
-      properties:
-        id_cliente:
-          type: integer
-        nombre:
-          type: string
-```
-
-Las tres secciones clave son:
-
-- **`paths`** — declara cada endpoint con su método HTTP, parámetros y respuestas posibles
-- **`components/schemas`** — define los modelos de datos reutilizables (equivalente a tus tablas MySQL)
-- **`servers`** — indica la URL base donde vive la API
-
-La ventaja principal es que este archivo es legible por humanos y por herramientas: generadores de código, plataformas de documentación como Swagger UI, y herramientas de prueba como Postman pueden consumirlo directamente. En este hands-on lo usaremos como puente entre el esquema de base de datos y el código de los servicios web.
-
-## Generar especificación para solo UNA tabla
-Si solo quisieras generar la especificación CRUD para una tabla, puedes usar un prompt como el siguiente:
-
-**Prompt:**
-```
-Genera la especificación OpenAPI 3.0 en formato YAML para una API REST con operaciones CRUD completas sobre la siguiente tabla MySQL:
-
-CREATE TABLE clientes (
-  id_cliente   INT          NOT NULL AUTO_INCREMENT,
-  nombre       VARCHAR(100) NOT NULL,
-  email        VARCHAR(150) NOT NULL UNIQUE,
-  telefono     VARCHAR(20)      NULL,
-  created_at   DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (id_cliente)
+CREATE TABLE materias (
+  id       INT AUTO_INCREMENT PRIMARY KEY,
+  clave    VARCHAR(20) UNIQUE NOT NULL,
+  nombre   VARCHAR(100) NOT NULL,
+  creditos INT
 );
 
-Requisitos:
-* Incluye los endpoints: GET /clientes, GET /clientes/{id}, POST /clientes, PUT /clientes/{id}, DELETE /clientes/{id}
-* Define los schemas Cliente y ClienteInput (sin id_cliente ni created_at para creación/edición)
-* Incluye respuestas para los códigos HTTP: 200, 201, 204, 400, 404 y 500
-* Agrega ejemplos de request body y response para cada operación
-* El servidor base debe ser http://localhost:3000/api/v1
-```
-***
+CREATE TABLE docentes (
+  id          INT AUTO_INCREMENT PRIMARY KEY,
+  nombre      VARCHAR(100) NOT NULL,
+  email       VARCHAR(100) UNIQUE NOT NULL,
+  materia_id INT,
+  FOREIGN KEY (materia_id) REFERENCES materias(id)
+);
 
-Algunos ajustes opcionales que puedes agregar al prompt según tus necesidades:
+INSERT INTO materias (clave, nombre, creditos) VALUES
+  ('TC1028', 'Programacion en Python', 5),
+  ('TC1004B', 'Implementacion de IoT', 4),
+  ('TC2005B', 'Construccion de Software', 5);
 
-* _"Usa autenticación Bearer Token (JWT)"_ — si necesitas seguridad.
-* _"Agrega paginación con parámetros `page` y `limit` en el `GET /clientes`"_ — para listas grandes.
-* _"Incluye también el schema para errores estandarizado con `code` y `message`"_ — para respuestas de error consistentes.
+------------------------------------------------------------------------
+2. INSTALACIÓN Y CONFIGURACIÓN DEL BACKEND
+------------------------------------------------------------------------
 
-## Generar especificación para TODAS las tablas
+El backend se aloja en el archivo 'main.py' y expone los servicios bajo 
+el prefijo '/api/v1'.
 
-**Prompt:**
+Paso 2.1: Instalar dependencias de Python
+Abra una terminal en Codespaces y ejecute el siguiente comando para 
+instalar las bibliotecas requeridas:
 
-```
-Genera la especificación OpenAPI 3.0 en formato YAML para una API REST con operaciones CRUD completas para cada tabla del siguiente esquema MySQL:
+  pip install Flask mysql-connector-python flask-cors
 
-[pega aquí todo el contenido del archivo tienda_simple.sql]
+Paso 2.2: Configurar las variables de entorno
+Defina las credenciales de acceso de MySQL en su terminal para que Flask 
+pueda consumirlas:
 
-Requisitos:
-* Por cada tabla genera los endpoints: GET /{recurso}, GET /{recurso}/{id}, POST /{recurso}, PUT /{recurso}/{id}, DELETE /{recurso}/{id}
-* Los recursos deben llamarse clientes, productos y pedidos
-* Define un schema por cada tabla (ej. Cliente, Producto, Pedido) y su variante Input sin campos autogenerados como id y created_at
-* Respeta las relaciones entre tablas: pedidos referencia a clientes e productos mediante sus IDs
-* Incluye respuestas para los códigos HTTP: 200, 201, 204, 400, 404 y 500
-* Define un schema reutilizable Error con campos code y message, y úsalo en todas las respuestas de error
-* Agrega ejemplos de request body y response para cada operación de cada recurso
-* El servidor base debe ser http://localhost:3000/api/v1
-* Agrupa los endpoints por tag: uno por tabla (Clientes, Productos, Pedidos)
-```
+  En Linux / macOS / GitHub Codespaces:
+  export DB_HOST="localhost"
+  export DB_USER="tu_usuario_mysql"
+  export DB_PASSWORD="tu_password_mysql"
+  export DB_NAME="directorio"
 
-## Validar los archivos YAML generados
+  En Windows (Command Prompt):
+  set DB_HOST=localhost
+  set DB_USER=tu_usuario_mysql
+  set DB_PASSWORD=tu_password_mysql
+  set DB_NAME=directorio
 
-Usa las siguientes herramientas para validar tu archivo:
+Paso 2.3: Ejecutar la API Flask
+Inicie el servidor de desarrollo ejecutando:
 
-- https://oas-validation.com
-- https://swapcode.ai/swagger-validator
+  python main.py
 
-***
+El servidor estara escuchando de forma nativa en el puerto 3000.
 
-# 3. Generar los servicios web a partir del archivo YAML usando IA
+Paso 2.4: Modificar visibilidad del puerto en Codespaces
+1. Dirijase a la pestaña "Ports" (Puertos) en la parte inferior de GitHub 
+   Codespaces.
+2. Localice el puerto 3000.
+3. Haga clic derecho sobre el puerto o en la columna "Port Visibility".
+4. Cambie el estado de "Private" a "Public". Esto permitira que el 
+   navegador o herramientas externas tengan acceso a los endpoints.
 
-### Ventajas y desventajas
-Es una práctica muy común y generalmente recomendable.
+------------------------------------------------------------------------
+3. INSTALACIÓN Y CONFIGURACIÓN DEL FRONTEND
+------------------------------------------------------------------------
 
-**Ventajas**
+El cliente web esta construido en un unico archivo independiente llamado 
+'index.html'.
 
-La especificación OpenAPI es una fuente de verdad estructurada y sin ambigüedades, lo que hace que la IA genere código bastante confiable a partir de ella. En la práctica obtenemos:
+Paso 3.1: Actualizar URL del backend en el codigo
+Abra 'index.html' y localice la constante 'API_BASE_URL' en las primeras 
+lineas de la etiqueta <script>. Reemplace su valor con la URL publica 
+provista por su entorno de Codespaces para el puerto 3000:
 
-* **Consistencia garantizada** — los nombres de campos, tipos de datos y rutas coinciden exactamente con el YAML, sin errores de transcripción.
-* **Velocidad** — podemos tener un servidor funcional con validaciones, modelos y rutas en minutos. El scaffolding tedioso (manejo de errores, estructura de carpetas) sale casi gratis.
-* **Multi-lenguaje** — el mismo YAML puede producir código en Node/Express, FastAPI, Spring Boot, Laravel, etc. sin reescribir la lógica de contrato.
-* **Generación de clientes y tests** — además del servidor podemos generar SDKs para el frontend, colecciones de Postman o pruebas de integración básicas desde el mismo archivo.
+  const API_BASE_URL = 'https://URL_DE_TU_CODESPACE-3000.app.github.dev/api/v1';
 
-**Desventajas y riesgos reales**
+Paso 3.2: Levantar el servidor web para el Frontend
+Abra una segunda terminal en Codespaces (manteniendo la de Flask en 
+ejecucion) y despliegue un servidor HTTP ligero usando el modulo 
+integrado de Python:
 
-El código generado rara vez está listo para producción sin revisión. Los problemas más frecuentes son:
+  python -m http.server 8080
 
-* **Lógica de negocio ausente** — la IA genera la estructura, pero validaciones específicas ("el email debe ser corporativo", "no se puede eliminar un cliente con pedidos activos") no viven en el YAML y hay que agregarlas a mano.
-* **Seguridad superficial** — autenticación, autorización por roles y sanitización de inputs suelen generarse como placeholders o directamente se omiten si el YAML no los especifica con detalle.
-* **Código no idiomático** — a veces el resultado es funcional pero no sigue las convenciones del framework, lo que genera deuda técnica si el equipo no lo revisa.
-* **Falsa confianza** — el mayor riesgo es asumir que porque compila y responde bien en Postman, está listo. Las "edge cases" (concurrencia, transacciones en la BD, manejo de errores a nivel de driver MySQL) necesitan atención humana.
+Paso 3.3: Modificar visibilidad del puerto del Frontend
+1. Vuelva a la pestaña "Ports" (Puertos) de Codespaces.
+2. Localice el puerto 8080.
+3. Cambie la propiedad "Port Visibility" de "Private" a "Public".
+4. Haga clic en la URL del puerto 8080 o en la opcion "Open in Browser" 
+   para visualizar e interactuar con la interfaz de usuario de la 
+   aplicacion.
 
-**Recomendación práctica**
+------------------------------------------------------------------------
+4. ESTRUCTURA DE ENDPOINTS DISPONIBLES (API REST)
+------------------------------------------------------------------------
 
-Usarlo, pero con una estrategia en capas:
+Materias:
+- GET  /api/v1/materias       : Retorna la coleccion completa de materias.
+- POST /api/v1/materias       : Registra una nueva materia. Requiere 
+                                JSON en el body con 'clave' y 'nombre'.
+- GET  /api/v1/materias/<id>  : Obtiene los detalles de una materia.
+- PUT  /api/v1/materias/<id>  : Actualiza los datos de una materia.
+- DELETE /api/v1/materias/<id>: Remueve una materia si no cuenta con 
+                                registros relacionados.
 
-1. **Genera con IA** el scaffolding completo (rutas, controladores, modelos, middleware de validación).
-2. **Revisa y ajusta** la conexión a base de datos, manejo de errores y transacciones.
-3. **Agrega a mano** la lógica de negocio y seguridad.
-4. **Genera también** los tests desde el mismo YAML y úsalos para validar el código generado.
-
-El YAML es suficientemente completo para que una IA produzca un ~70% del trabajo real. Ese porcentaje es el que más tiempo lleva hacer a mano, así que la ganancia es usando IA es muy buena.
-
-
-## Ejemplos de Prompts para generación de código
-
-
-**Python**
-
-```
-Eres un desarrollador Python. A partir del siguiente OpenAPI 3.0 YAML,
-genera una API REST funcional con Flask y MySQL.
-
-<openapi_yaml>
-[PEGA AQUÍ TU YAML]
-</openapi_yaml>
-
-Requisitos:
-- Flask + mysql-connector-python
-- Un solo archivo main.py
-- Implementa todos los endpoints del YAML con sus rutas,
-  métodos HTTP y códigos de respuesta exactos
-- Usa variables de entorno para la conexión a MySQL
-- Si un recurso no existe, responde con 404
-- Habilita CORS para todos los orígenes usando flask-cors:
-  from flask_cors import CORS
-  app = Flask(__name__)
-  CORS(app, origins="*")
-```
-
----
-
-**Node.js**
-
-```
-Eres un desarrollador Node.js. A partir del siguiente OpenAPI 3.0 YAML,
-genera una API REST funcional con Express y MySQL.
-
-<openapi_yaml>
-[PEGA AQUÍ TU YAML]
-</openapi_yaml>
-
-Requisitos:
-- Express + mysql2
-- Un solo archivo index.js
-- Implementa todos los endpoints del YAML con sus rutas,
-  métodos HTTP y códigos de respuesta exactos
-- Usa variables de entorno para la conexión a MySQL
-- Si un recurso no existe, responde con 404
-- Habilita CORS para todos los orígenes usando el paquete cors:
-  const cors = require('cors')
-  app.use(cors())
-```
-
----
-
-
-# 4. Generar el frontend a partir de los webservices usando IA
-
-Una vez que tienes los servicios web funcionando, el mismo YAML de OpenAPI (y opcionalmente el código del servidor) sirven como base para que la IA genere un cliente web funcional. Los prompts siguientes asumen que el servidor corre en `http://localhost:3000/api/v1`.
-
-## HTML + JavaScript (sin frameworks)
-
-```
-Eres un desarrollador frontend. A partir del siguiente OpenAPI 3.0 YAML,
-genera una aplicación web funcional usando solo HTML, CSS y JavaScript vanilla.
-
-<openapi_yaml>
-[PEGA AQUÍ TU YAML]
-</openapi_yaml>
-
-Requisitos:
-- Un solo archivo index.html (CSS y JS embebidos en el mismo archivo)
-- Una sección por cada recurso (Clientes, Productos, Pedidos) navegable mediante tabs o un menú lateral
-- Por cada recurso implementa:
-  - Tabla para listar todos los registros (GET /{recurso})
-  - Formulario para crear un nuevo registro (POST /{recurso})
-  - Formulario para editar un registro existente (PUT /{recurso}/{id})
-  - Botón para eliminar un registro con confirmación (DELETE /{recurso}/{id})
-- Usa fetch() para todas las llamadas HTTP con la base URL http://localhost:3000/api/v1
-- Muestra mensajes de éxito y error en pantalla (no solo console.log)
-- No uses librerías externas; solo HTML5, CSS y JS nativos del navegador
-```
-
----
-
-## React + Vite
-
-```
-Eres un desarrollador frontend. A partir del siguiente OpenAPI 3.0 YAML,
-genera una aplicación React funcional usando Vite como bundler.
-
-<openapi_yaml>
-[PEGA AQUÍ TU YAML]
-</openapi_yaml>
-
-Requisitos:
-- Estructura de archivos:
-  - src/api/        → un módulo por recurso (clientesApi.js, productosApi.js, pedidosApi.js)
-                      con funciones async que encapsulan los fetch() a http://localhost:3000/api/v1
-  - src/components/ → componentes reutilizables: tabla genérica, formulario, modal de confirmación
-  - src/pages/      → una página por recurso (ClientesPage, ProductosPage, PedidosPage)
-  - App.jsx         → enrutamiento con React Router entre las tres páginas
-- Por cada recurso implementa las operaciones CRUD completas:
-  GET (listar), GET por id (detalle), POST (crear), PUT (editar), DELETE (eliminar con confirm)
-- Manejo de estado con useState y useEffect; sin librerías de estado global
-- Muestra estados de carga (loading) y mensajes de error en la UI
-- Usa solo Tailwind CSS para estilos (configurado en el proyecto Vite)
-- El archivo vite.config.js debe incluir un proxy de /api hacia http://localhost:3000
-  para evitar problemas de CORS en desarrollo
-```
-
----
-
-> **Nota sobre el proxy en Vite:** configurar el proxy en `vite.config.js` es importante porque evita los errores de CORS durante el desarrollo sin tener que modificar el servidor backend. En producción se resuelve a nivel de servidor web (nginx, caddy, etc.).
-```
-
----
+Docentes:
+- GET  /api/v1/docentes       : Retorna la coleccion de docentes junto 
+                                con el ID de su materia.
+- POST /api/v1/docentes       : Registra un nuevo docente. Requiere 
+                                JSON con 'nombre' y 'email'.
+- DELETE /api/v1/docentes/<id>: Remueve un docente del directorio.
+========================================================================
